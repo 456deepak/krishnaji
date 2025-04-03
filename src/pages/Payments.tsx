@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { CreditCard, Check } from 'lucide-react';
+import { CreditCard, Check, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const paymentFormSchema = z.object({
   amount: z.string()
@@ -19,6 +20,7 @@ const paymentFormSchema = z.object({
   recipient: z.string().min(2, { message: "Recipient name is required" }),
   description: z.string().optional(),
   paymentMethod: z.string({ required_error: "Please select a payment method" }),
+  paymentGateway: z.string({ required_error: "Please select a payment gateway" }),
 });
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
@@ -39,6 +41,7 @@ const Payments = () => {
   const [showCardForm, setShowCardForm] = useState(false);
   const [isCardProcessing, setIsCardProcessing] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const paymentForm = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
@@ -47,6 +50,7 @@ const Payments = () => {
       recipient: "",
       description: "",
       paymentMethod: "",
+      paymentGateway: "cashfree", // Default to cashfree
     },
   });
 
@@ -60,37 +64,87 @@ const Payments = () => {
     },
   });
 
-  const onPaymentSubmit = (data: PaymentFormValues) => {
+  const onPaymentSubmit = async (data: PaymentFormValues) => {
     setIsPaymentSubmitting(true);
+    setPaymentError(null);
     
-    // Simulate api call
-    setTimeout(() => {
+    try {
+      // Here you would integrate with your Node.js backend
+      // This is a placeholder for the API call
+      const paymentData = {
+        amount: data.amount,
+        recipient: data.recipient,
+        description: data.description || '',
+        paymentMethod: data.paymentMethod,
+        paymentGateway: data.paymentGateway
+      };
+      
+      console.log("Payment data to be sent to backend:", paymentData);
+      
+      // Simulate API call - in real implementation, replace with actual fetch to your Node.js backend
+      setTimeout(() => {
+        setIsPaymentSubmitting(false);
+        
+        // If the gateway is cashfree and it's a card payment, show the card form
+        if (data.paymentGateway === 'cashfree' && data.paymentMethod === 'credit_card') {
+          setShowCardForm(true);
+        } else {
+          // For UPI or other methods, you might redirect to Cashfree's page directly
+          // This would be handled by your backend
+          toast({
+            title: "Redirecting to payment gateway",
+            description: "You will be redirected to complete your payment.",
+          });
+        }
+      }, 1000);
+      
+    } catch (error) {
       setIsPaymentSubmitting(false);
-      setShowCardForm(true);
-    }, 1000);
+      setPaymentError("Failed to initiate payment. Please try again.");
+      console.error("Payment initiation error:", error);
+    }
   };
 
-  const onCardSubmit = (data: CardDetailsFormValues) => {
+  const onCardSubmit = async (data: CardDetailsFormValues) => {
     setIsCardProcessing(true);
+    setPaymentError(null);
     
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsCardProcessing(false);
-      setPaymentCompleted(true);
+    try {
+      // Here you would integrate with your Node.js backend to process card payment
+      // This is a placeholder for the API call
+      const cardData = {
+        ...data,
+        amount: paymentForm.getValues("amount"),
+        recipient: paymentForm.getValues("recipient"),
+        paymentGateway: paymentForm.getValues("paymentGateway")
+      };
       
-      toast({
-        title: "Payment Successful",
-        description: "Your payment has been processed successfully.",
-      });
+      console.log("Card data to be sent to backend:", cardData);
       
-      // Reset forms after successful payment
+      // Simulate payment processing - replace with actual fetch to your backend
       setTimeout(() => {
-        setPaymentCompleted(false);
-        setShowCardForm(false);
-        paymentForm.reset();
-        cardForm.reset();
-      }, 2000);
-    }, 1500);
+        setIsCardProcessing(false);
+        setPaymentCompleted(true);
+        
+        toast({
+          title: "Payment Successful",
+          description: "Your payment has been processed successfully.",
+        });
+        
+        // Reset forms after successful payment
+        setTimeout(() => {
+          setPaymentCompleted(false);
+          setShowCardForm(false);
+          paymentForm.reset();
+          cardForm.reset();
+        }, 2000);
+      }, 1500);
+      
+    } catch (error) {
+      setIsCardProcessing(false);
+      setPaymentError("Payment processing failed. Please try again or use another payment method.");
+      console.error("Payment processing error:", error);
+    }
   };
 
   return (
@@ -106,6 +160,14 @@ const Payments = () => {
           <TabsTrigger value="recurring">Recurring Payments</TabsTrigger>
         </TabsList>
         <TabsContent value="new">
+          {paymentError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Payment Error</AlertTitle>
+              <AlertDescription>{paymentError}</AlertDescription>
+            </Alert>
+          )}
+          
           {paymentCompleted ? (
             <Card className="w-full max-w-2xl mx-auto">
               <CardContent className="pt-6">
@@ -261,6 +323,28 @@ const Payments = () => {
                     
                     <FormField
                       control={paymentForm.control}
+                      name="paymentGateway"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Gateway</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a payment gateway" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="cashfree">Cashfree</SelectItem>
+                              <SelectItem value="stripe">Stripe</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={paymentForm.control}
                       name="paymentMethod"
                       render={({ field }) => (
                         <FormItem>
@@ -274,7 +358,9 @@ const Payments = () => {
                             <SelectContent>
                               <SelectItem value="credit_card">Credit Card</SelectItem>
                               <SelectItem value="debit_card">Debit Card</SelectItem>
-                              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                              <SelectItem value="upi">UPI</SelectItem>
+                              <SelectItem value="netbanking">Net Banking</SelectItem>
+                              <SelectItem value="wallet">Wallet</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
