@@ -140,7 +140,7 @@ const Dashboard = () => {
           </div>
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
+        {/* <CardContent>
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
@@ -160,7 +160,7 @@ const Dashboard = () => {
               </div>
             ))}
           </div>
-        </CardContent>
+        </CardContent> */}
       </Card>
     </div>
   );

@@ -1,23 +1,36 @@
+import { Navigate, useLocation } from 'react-router-dom';
 
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  admin?: boolean;
+}
 
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+const ProtectedRoute = ({ children, admin = false }: ProtectedRouteProps) => {
+  const location = useLocation();
+  
+  if (admin) {
+    // For admin routes, check for admin token
+    const adminToken = localStorage.getItem('adminToken');
+    
+    if (!adminToken) {
+      // If no admin token, redirect to admin login
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
+    
+    // If admin token exists, allow access
+    return <>{children}</>;
+  } else {
+    // For user routes, check for user token
+    const userToken = localStorage.getItem('token');
+    
+    if (!userToken) {
+      // If no user token, redirect to user login
+      return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+    
+    // If user token exists, allow access
+    return <>{children}</>;
   }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
 };
 
 export default ProtectedRoute;

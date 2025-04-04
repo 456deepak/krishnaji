@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, CreditCard, History, Menu, LogOut } from 'lucide-react';
+import { LayoutDashboard, CreditCard, History, Menu, LogOut, Wallet, ArrowDownUp } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,9 @@ const AppLayout = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: CreditCard, label: 'Payments', path: '/payments' },
     { icon: History, label: 'Payment History', path: '/payment-history' },
+    // { icon: Wallet, label: 'Deposit', path: '/deposit' },
+    { icon: ArrowDownUp, label: 'Withdraw', path: '/withdraw' },
+    { icon: History, label: 'Transaction History', path: '/transaction-history' },
   ];
 
   return (
@@ -29,7 +31,7 @@ const AppLayout = () => {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-primary">Swift Pay</h1>
+          <h1 className="text-2xl font-bold text-primary">Kirpa Bhiharji Pay</h1>
           <p className="text-sm text-gray-500 mt-1">Payment Dashboard</p>
         </div>
         <Separator />
@@ -80,7 +82,7 @@ const AppLayout = () => {
         {/* Mobile Header */}
         <header className="md:hidden bg-white border-b border-gray-200 py-4 px-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-primary">Swift Pay</h1>
+            <h1 className="text-xl font-bold text-primary">Kirpa Bhiharji Pay</h1>
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -89,7 +91,7 @@ const AppLayout = () => {
               </SheetTrigger>
               <SheetContent side="left" className="w-64 p-0">
                 <div className="p-6">
-                  <h1 className="text-2xl font-bold text-primary">Swift Pay</h1>
+                  <h1 className="text-2xl font-bold text-primary">Kirpa Bhiharji Pay</h1>
                   <p className="text-sm text-gray-500 mt-1">Payment Dashboard</p>
                 </div>
                 <Separator />

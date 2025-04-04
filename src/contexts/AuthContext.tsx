@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -6,13 +5,15 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  role: 'user' | 'admin';
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -34,35 +35,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is already logged in
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const token = localStorage.getItem('token');
+    
+    if (storedUser && token) {
       setUser(JSON.parse(storedUser));
     }
     setIsLoading(false);
   }, []);
 
-  // Mock login function (replace with real authentication later)
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Mock validation
-      if (email === 'demo@example.com' && password === 'password') {
-        const user = {
-          id: '1',
-          name: 'Demo User',
-          email: 'demo@example.com',
-        };
-        setUser(user);
-        localStorage.setItem('user', JSON.stringify(user));
-        toast({
-          title: "Login Successful",
-          description: "Welcome back!",
-        });
-      } else {
-        throw new Error('Invalid email or password');
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Login failed');
       }
+
+      // Save token and user data
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('user', JSON.stringify(result.user));
+      
+      setUser(result.user);
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
     } catch (error: any) {
       toast({
         title: "Login Failed",
@@ -75,21 +82,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Mock register function (replace with real registration later)
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, phone?: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email, password, phone })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Registration failed');
+      }
+
+      // Save token and user data
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('user', JSON.stringify(result.user));
       
-      // Mock registration
-      const user = {
-        id: Date.now().toString(),
-        name,
-        email,
-      };
-      setUser(user);
-      localStorage.setItem('user', JSON.stringify(user));
+      setUser(result.user);
+      
       toast({
         title: "Registration Successful",
         description: "Your account has been created!",
@@ -109,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
