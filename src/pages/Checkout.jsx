@@ -1,5 +1,6 @@
 import { load } from "@cashfreepayments/cashfree-js";
 import axios from 'axios';
+import { ENDPOINTS } from '@/utils/config';
 
 function Checkout() {
   let cashfree;
@@ -10,10 +11,9 @@ function Checkout() {
   };
   initializeSDK();
 
-  const doPayment = async () => {
+  const createOrder = async () => {
     try {
-      // Simple GET request to create order
-      const response = await axios.get('http://localhost:5000/api/payments/create-order');
+      const response = await axios.get(ENDPOINTS.PAYMENTS.CREATE);
       console.log('Order creation response:', response.data);
 
       const { paymentSessionId } = response.data;
@@ -43,7 +43,7 @@ function Checkout() {
   return (
     <div className="row">
       <p>Click below to open the checkout page in popup</p>
-      <button type="submit" className="btn btn-primary" id="renderBtn" onClick={doPayment}>
+      <button type="submit" className="btn btn-primary" id="renderBtn" onClick={createOrder}>
         Pay Now
       </button>
     </div>

@@ -28,6 +28,7 @@ import { Calendar as CalendarIcon, ArrowUpDown, Filter } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
+import { ENDPOINTS } from '@/utils/config';
 
 // Form schema
 const filterFormSchema = z.object({
@@ -85,7 +86,7 @@ const AdminPayments = () => {
         throw new Error('No admin token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/admin/payments', {
+      const response = await fetch(ENDPOINTS.ADMIN.PAYMENTS, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -145,7 +146,7 @@ const AdminPayments = () => {
         throw new Error('No admin token found');
       }
 
-      const response = await fetch(`http://localhost:5000/api/admin/payments?${queryParams.toString()}`, {
+      const response = await fetch(`${ENDPOINTS.ADMIN.PAYMENTS}?${queryParams.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

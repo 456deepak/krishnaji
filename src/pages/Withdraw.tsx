@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ENDPOINTS } from '@/utils/config';
 
 const withdrawSchema = z.object({
   amount: z.string()
@@ -32,7 +33,7 @@ const Withdraw = () => {
   const fetchBalance = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/transactions/summary', {
+      const response = await fetch(ENDPOINTS.TRANSACTIONS.SUMMARY, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -70,13 +71,8 @@ const Withdraw = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const amount = Number(data.amount);
 
-      if (amount > balance) {
-        throw new Error('Insufficient balance');
-      }
-
-      const response = await fetch('http://localhost:5000/api/transactions', {
+      const response = await fetch(ENDPOINTS.TRANSACTIONS.BASE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +80,7 @@ const Withdraw = () => {
         },
         body: JSON.stringify({
           type: 'withdraw',
-          amount,
+          amount: Number(data.amount),
           description: data.description
         })
       });
@@ -101,8 +97,7 @@ const Withdraw = () => {
       });
 
       form.reset();
-      // Update balance after successful withdrawal
-      await fetchBalance();
+      fetchBalance(); // Refresh balance after successful withdrawal
     } catch (error) {
       toast({
         title: 'Error',

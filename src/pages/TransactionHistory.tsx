@@ -29,6 +29,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ENDPOINTS } from '@/utils/config';
 
 // Form schema
 const filterFormSchema = z.object({
@@ -84,7 +85,7 @@ const TransactionHistory = () => {
         throw new Error('No token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/transactions/history', {
+      const response = await fetch(ENDPOINTS.TRANSACTIONS.HISTORY, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -144,7 +145,7 @@ const TransactionHistory = () => {
         throw new Error('No token found');
       }
 
-      const response = await fetch(`http://localhost:5000/api/transactions/history?${queryParams.toString()}`, {
+      const response = await fetch(`${ENDPOINTS.TRANSACTIONS.HISTORY}?${queryParams.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

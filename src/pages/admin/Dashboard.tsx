@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Users, CreditCard, History, DollarSign } from 'lucide-react';
+import { ENDPOINTS } from '@/utils/config';
 
 interface DashboardStats {
   totalUsers: number;
@@ -42,7 +43,7 @@ const AdminDashboard = () => {
         throw new Error('No admin token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/admin/stats', {
+      const response = await fetch(`${ENDPOINTS.ADMIN.STATS}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

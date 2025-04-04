@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ENDPOINTS } from '@/utils/config';
 
 const adminSignupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -34,7 +35,7 @@ const AdminSignup = () => {
   const onSubmit = async (data: AdminSignupFormValues) => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/admin/signup', {
+      const response = await fetch(ENDPOINTS.AUTH.ADMIN_SIGNUP, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

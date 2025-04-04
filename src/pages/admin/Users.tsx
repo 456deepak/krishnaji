@@ -25,6 +25,7 @@ import { ArrowUpDown, Filter } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
+import { ENDPOINTS } from '@/utils/config';
 
 // Form schema
 const filterFormSchema = z.object({
@@ -76,7 +77,7 @@ const AdminUsers = () => {
         throw new Error('No admin token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch(ENDPOINTS.ADMIN.USERS, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -125,7 +126,7 @@ const AdminUsers = () => {
         throw new Error('No admin token found');
       }
 
-      const response = await fetch(`http://localhost:5000/api/admin/users?${queryParams.toString()}`, {
+      const response = await fetch(`${ENDPOINTS.ADMIN.USERS}?${queryParams.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -28,6 +28,7 @@ import { Calendar as CalendarIcon, ChevronDown, ArrowUpDown, Download, Filter } 
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
+import { ENDPOINTS } from '@/utils/config';
 
 // Form schema
 const filterFormSchema = z.object({
@@ -80,9 +81,15 @@ const PaymentHistory = () => {
 
   const fetchPayments = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/payments/history', {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      const response = await fetch(ENDPOINTS.PAYMENTS.HISTORY, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -96,7 +103,7 @@ const PaymentHistory = () => {
       console.error('Error fetching payments:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch payment history',
+        description: error instanceof Error ? error.message : 'Failed to fetch payments',
         variant: 'destructive'
       });
     } finally {
@@ -175,7 +182,7 @@ const PaymentHistory = () => {
         throw new Error('No token found');
       }
 
-      const response = await fetch(`http://localhost:5000/api/payments/history?${queryParams.toString()}`, {
+      const response = await fetch(`${ENDPOINTS.PAYMENTS.HISTORY}?${queryParams.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

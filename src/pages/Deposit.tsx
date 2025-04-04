@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/components/ui/use-toast';
+import { ENDPOINTS } from '@/utils/config';
 
 const depositSchema = z.object({
   amount: z.string()
@@ -35,7 +36,7 @@ const Deposit = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
 
-      const response = await fetch('http://localhost:5000/api/transactions', {
+      const response = await fetch(ENDPOINTS.TRANSACTIONS.BASE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
