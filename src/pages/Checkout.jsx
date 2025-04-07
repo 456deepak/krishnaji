@@ -63,7 +63,7 @@ function Checkout() {
       // Configure checkout options
       const checkoutOptions = {
         paymentSessionId: data.payment_session_id,
-        redirectTarget: "_modal",
+        redirectTarget: "_self",
         onSuccess: (data) => {
           console.log("Payment Success:", data);
           toast.success("Payment successful!");
@@ -92,7 +92,7 @@ function Checkout() {
 
   return (
     <div className="row">
-      <p>Click below to open the checkout page in popup</p>
+      <p>Click below to open the checkout page</p>
       <button 
         type="submit" 
         className="btn btn-primary" 

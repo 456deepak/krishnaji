@@ -32,6 +32,34 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/payments', paymentRoutes);
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/admin', require('./routes/admin'));
+app.post("/api/payments/create-order", async (req, res) => {
+  try {
+    const result = await axios.post(
+      'https://sandbox.cashfree.com/pg/orders',
+      {
+        orderAmount: "100",
+        orderCurrency: "INR",
+        customerDetails: {
+          customerId: "12345",
+          customerEmail: "test@example.com",
+          customerPhone: "9999999999"
+        }
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-client-id': 'TEST10521959fe208239e07027d11fea95912501',
+          'x-client-secret': 'cfsk_ma_test_4197569adaa2437152606159bc2bbdaa_2331ff1d'
+        }
+      }
+    );
+    console.log('Order creation response:', result.data);
+    res.status(200).json(result.data);
+  } catch (error) {
+    console.error('Cashfree Error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
