@@ -5,7 +5,8 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 const { Cashfree } = require('cashfree-pg');
-
+const axios = require('axios');
+const Transaction = require('../models/Transaction');
 // Initialize Cashfree
 const cashfree = new Cashfree(
   Cashfree.SANDBOX,
@@ -23,147 +24,90 @@ const validatePayment = [
 
 // Create payment
 router.post('/create', auth, validatePayment, async (req, res) => {
-  try {
-    console.log('Payment creation request received:', req.body);
-    
-    // Validate request
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.error('Validation errors:', errors.array());
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { amount, recipientName, recipientEmail, recipientPhone } = req.body;
-    const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const userId = req.user.id;
-    
-    console.log('User ID from auth middleware:', userId);
-    console.log('Creating order with ID:', orderId);
-
-    // Create order request
-    const orderRequest = {
-      order_id: orderId,
-      order_amount: Number(amount),
-      order_currency: 'INR',
-      customer_details: {
-        customer_id: userId,
-        customer_name: recipientName,
-        customer_email: recipientEmail,
-        customer_phone: recipientPhone
-      },
-      order_meta: {
-        return_url: `${process.env.FRONTEND_URL}/payment/success?order_id={order_id}`,
-        notify_url: `${process.env.BACKEND_URL}/api/payments/webhook`
-      }
-    };
-
-    console.log('Order request:', orderRequest);
-
-    // Create order with Cashfree using the correct method
-    let orderResponse;
-    try {
-      orderResponse = await cashfree.PGCreateOrder(orderRequest);
-      console.log('Cashfree order response:', orderResponse);
-    } catch (error) {
-      console.error('Error with PGCreateOrder:', error);
-      console.error('Error details:', error.response ? error.response.data : 'No response data');
-      
-      // Check if it's an authentication error
-      if (error.response && error.response.status === 401) {
-        console.error('Authentication failed. Please check your Cashfree credentials.');
-        return res.status(401).json({ 
-          message: 'Authentication failed with Cashfree. Please check your credentials.',
-          details: error.response.data
-        });
-      }
-      
-      throw new Error(`Failed to create order with Cashfree: ${error.message}`);
-    }
-
-    // Handle response
-    if (!orderResponse || !orderResponse.data || !orderResponse.data.order_id) {
-      console.error('Invalid order response:', orderResponse);
-      throw new Error('Invalid response from Cashfree');
-    }
-
-    // Create payment record
-    const payment = new Payment({
-      user: userId,
-      orderId: orderResponse.data.order_id,
-      amount,
-      paymentDetails: {
-        recipientName,
-        recipientEmail,
-        recipientPhone
-      },
-      status: 'pending'
-    });
-
-    await payment.save();
-    console.log('Payment record created:', payment);
-
-    // Return both order ID and payment session ID
-    res.json({
-      success: true,
-      data: {
-        orderId: orderResponse.data.order_id,
-        payment_session_id: orderResponse.data.payment_session_id,
-        orderStatus: orderResponse.data.order_status,
-        orderAmount: orderResponse.data.order_amount,
-        orderCurrency: orderResponse.data.order_currency
-      }
-    });
-  } catch (error) {
-    console.error('Payment creation error:', error);
-    res.status(500).json({ 
-      success: false,
-      message: error.message || 'Failed to create payment' 
-    });
-  }
+  
 });
 
 // Create order and get payment session ID
 router.post('/create-order', auth, async (req, res) => {
+ 
+});
+
+// Update user balance
+router.post('/update-balance', auth, async (req, res) => {
   try {
-    const { order_amount, order_currency, customer_details } = req.body;
+    const { amount, paymentData } = req.body;
     const userId = req.user.id;
     
-    // Generate unique order ID
-    const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Create order request
-    const orderRequest = {
-      order_id: orderId,
-      order_amount: Number(order_amount),
-      order_currency: order_currency || 'INR',
-      customer_details: customer_details || {
-        customer_id: userId,
-        customer_name: "John Doe",
-        customer_email: "john.doe@example.com",
-        customer_phone: "9999999999"
-      },
-      order_meta: {
-        return_url: `${process.env.FRONTEND_URL}/payment/success?order_id={order_id}`,
-        notify_url: `${process.env.BACKEND_URL}/api/payments/webhook`
-      }
-    };
+    if (!amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Amount is required'
+      });
+    }
 
-    console.log('Creating order with Cashfree:', orderRequest);
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
-    // Create order with Cashfree
-    const orderResponse = await cashfree.PGCreateOrder(orderRequest);
-    console.log('Cashfree order response:', orderResponse);
+    // Update user balance
+    user.balance = (user.balance || 0) + parseFloat(amount);
+    await user.save();
 
-    // Return the payment session ID to the frontend
+    console.log(`User ${userId} balance updated to ${user.balance}`);
+
+    // Return success
     res.json({
       success: true,
-      data: orderResponse.data
+      message: 'Balance updated successfully',
+      data: {
+        balance: user.balance
+      }
     });
   } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({ 
+    console.error('Error updating balance:', error);
+    res.status(500).json({
       success: false,
-      message: error.message || 'Error creating order' 
+      message: error.message || 'Failed to update balance'
+    });
+  }
+});
+
+// Store transaction
+router.post('/store-transaction', auth, async (req, res) => {
+  try {
+    const { amount, orderId, status, ...paymentData } = req.body;
+    const userId = req.user.id;
+
+    // Create a new payment record
+    const payment = new Payment({
+      user: userId,
+      orderId: orderId || `ORDER_${Date.now()}`,
+      amount: parseFloat(amount || 0),
+      status: status || 'pending',
+      paymentDetails: {
+        ...paymentData
+      },
+      metadata: paymentData
+    });
+
+    await payment.save();
+    console.log('Payment transaction stored:', payment);
+
+    res.json({
+      success: true,
+      message: 'Transaction stored successfully',
+      data: payment
+    });
+  } catch (error) {
+    console.error('Error storing transaction:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to store transaction'
     });
   }
 });
@@ -183,7 +127,16 @@ router.post('/verify', auth, async (req, res) => {
       throw new Error('Payment record not found');
     }
 
-    payment.status = (orderResponse.data.order_status || 'pending').toLowerCase();
+    // Map Cashfree status to our allowed enum values
+    const cashfreeStatus = (orderResponse.data.order_status || 'pending').toLowerCase();
+    let newStatus = 'pending';
+    if (cashfreeStatus === 'paid' || cashfreeStatus === 'success') {
+      newStatus = 'completed';
+    } else if (cashfreeStatus === 'failed' || cashfreeStatus === 'cancelled') {
+      newStatus = 'failed';
+    }
+    
+    payment.status = newStatus;
     payment.paymentId = orderResponse.data.payment_id;
     payment.paymentMethod = orderResponse.data.payment_method;
     payment.transactionId = orderResponse.data.transaction_id;
@@ -191,6 +144,35 @@ router.post('/verify', auth, async (req, res) => {
 
     await payment.save();
     console.log('Payment record updated:', payment);
+
+    // If payment is successful, update user balance
+    if (newStatus === 'completed') {
+      try {
+        const user = await User.findById(payment.user);
+        if (user) {
+          // Check if balance was already updated
+          const previousBalance = user.balance || 0;
+          user.balance = previousBalance + parseFloat(payment.amount);
+          await user.save();
+          console.log(`User ${user._id} balance updated from ${previousBalance} to ${user.balance}`);
+          
+          // Create a transaction record
+          const transaction = new Transaction({
+            userId: user._id,
+            type: 'deposit',
+            amount: payment.amount,
+            description: `Payment verified for order ${payment.orderId}`,
+            status: 'completed'
+          });
+          await transaction.save();
+          console.log(`Transaction record created: ${transaction._id}`);
+        } else {
+          console.error(`User not found for payment: ${payment._id}`);
+        }
+      } catch (error) {
+        console.error('Error updating user balance:', error);
+      }
+    }
 
     res.json({
       success: true,
@@ -211,9 +193,63 @@ router.post('/webhook', async (req, res) => {
     const { order_id, order_status, payment_id } = req.body;
     console.log('Webhook received:', req.body);
     
-    // Here you would update your database with the payment status
-    // For now, just log it
-    console.log(`Payment ${payment_id} for order ${order_id} is now ${order_status}`);
+    // Find the payment in our database
+    const payment = await Payment.findOne({ orderId: order_id });
+    
+    if (!payment) {
+      console.log(`Payment not found for order: ${order_id}`);
+      return res.json({ success: true }); // Acknowledge receipt even if not found
+    }
+    
+    console.log(`Found payment record: ${payment._id}, current status: ${payment.status}`);
+    
+    // Update payment status based on Cashfree status
+    let newStatus = 'pending';
+    if (order_status === 'PAID' || order_status === 'SUCCESS') {
+      newStatus = 'completed';
+    } else if (order_status === 'FAILED' || order_status === 'CANCELLED') {
+      newStatus = 'failed';
+    }
+    
+    payment.status = newStatus;
+    payment.paymentId = payment_id;
+    payment.metadata = {
+      ...payment.metadata,
+      webhook_data: req.body,
+      updated_at: new Date().toISOString()
+    };
+    
+    await payment.save();
+    console.log(`Payment ${payment_id} for order ${order_id} updated to ${newStatus}`);
+    
+    // If payment is successful, update user balance
+    if (newStatus === 'completed') {
+      try {
+        const user = await User.findById(payment.user);
+        if (user) {
+          // Update user balance
+          const previousBalance = user.balance || 0;
+          user.balance = previousBalance + parseFloat(payment.amount);
+          await user.save();
+          console.log(`User ${user._id} balance updated from ${previousBalance} to ${user.balance}`);
+          
+          // Create a transaction record
+          const transaction = new Transaction({
+            userId: user._id,
+            type: 'deposit',
+            amount: payment.amount,
+            description: `Payment received for order ${payment.orderId}`,
+            status: 'completed'
+          });
+          await transaction.save();
+          console.log(`Transaction record created: ${transaction._id}`);
+        } else {
+          console.error(`User not found for payment: ${payment._id}`);
+        }
+      } catch (error) {
+        console.error('Error updating user balance:', error);
+      }
+    }
     
     res.json({ success: true });
   } catch (error) {
@@ -222,7 +258,83 @@ router.post('/webhook', async (req, res) => {
   }
 });
 
-// Get payment history
+// Callback endpoint for payment status
+router.get('/callback', async (req, res) => {
+  try {
+    const { order_id, status } = req.query;
+    console.log('Payment callback received:', { order_id, status, query: req.query });
+    
+    // Find the payment in our database
+    const payment = await Payment.findOne({ orderId: order_id });
+    
+    if (!payment) {
+      console.log(`Payment not found for order: ${order_id}`);
+      return res.redirect(`/payment/failure?order_id=${order_id}&error=payment_not_found`);
+    }
+    
+    console.log(`Found payment record: ${payment._id}, current status: ${payment.status}`);
+    
+    // Update payment status based on URL status parameter
+    let newStatus = 'pending';
+    if (status === 'success') {
+      newStatus = 'completed';
+    } else if (status === 'failure') {
+      newStatus = 'failed';
+    }
+    
+    payment.status = newStatus;
+    payment.metadata = {
+      ...payment.metadata,
+      callback_data: req.query,
+      updated_at: new Date().toISOString()
+    };
+    
+    await payment.save();
+    console.log(`Payment ${payment._id} for order ${order_id} updated to ${newStatus}`);
+    
+    // If payment is successful, update user balance
+    if (newStatus === 'completed') {
+      try {
+        const user = await User.findById(payment.user);
+        if (user) {
+          // Update user balance
+          const previousBalance = user.balance || 0;
+          user.balance = previousBalance + parseFloat(payment.amount);
+          await user.save();
+          console.log(`User ${user._id} balance updated from ${previousBalance} to ${user.balance}`);
+          
+          // Create a transaction record
+          const transaction = new Transaction({
+            userId: user._id,
+            type: 'deposit',
+            amount: payment.amount,
+            description: `Payment received for order ${payment.orderId}`,
+            status: 'completed'
+          });
+          await transaction.save();
+          console.log(`Transaction record created: ${transaction._id}`);
+          
+          // Redirect to success page
+          return res.redirect(`/payment/success?order_id=${order_id}`);
+        } else {
+          console.error(`User not found for payment: ${payment._id}`);
+          return res.redirect(`/payment/failure?order_id=${order_id}&error=user_not_found`);
+        }
+      } catch (error) {
+        console.error('Error updating user balance:', error);
+        return res.redirect(`/payment/failure?order_id=${order_id}&error=balance_update_failed`);
+      }
+    }
+    
+    // For non-successful payments, redirect to failure page
+    return res.redirect(`/payment/failure?order_id=${order_id}&status=${newStatus}`);
+  } catch (error) {
+    console.error('Callback error:', error);
+    return res.redirect(`/payment/failure?error=${encodeURIComponent(error.message)}`);
+  }
+});
+
+// Get payment history - MUST be before the /:orderId route
 router.get('/history', auth, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -241,21 +353,26 @@ router.get('/history', auth, async (req, res) => {
   }
 });
 
-// Get Payment Details
+// Get Payment Details - MUST be after all specific routes
 router.get('/:orderId', auth, async (req, res) => {
   try {
+    console.log('Fetching payment details for order ID:', req.params.orderId);
+    
     const payment = await Payment.findOne({
       orderId: req.params.orderId,
       user: req.user.id
     });
 
     if (!payment) {
+      console.log(`Payment not found for order ID: ${req.params.orderId}`);
       return res.status(404).json({ 
         success: false,
         message: 'Payment not found' 
       });
     }
 
+    console.log(`Found payment: ${payment._id}, status: ${payment.status}`);
+    
     res.json({
       success: true,
       data: payment

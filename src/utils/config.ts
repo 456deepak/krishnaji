@@ -19,7 +19,7 @@ export const ENDPOINTS = {
   PAYMENTS: {
     BASE: `${API_URL}/payments`,
     HISTORY: `${API_URL}/payments/history`,
-    CREATE: `${API_URL}/payments/create`,
+    CREATE: `${API_URL}/payments/create-order`,
     VERIFY: (orderId: string) => `${API_URL}/payments/verify/${orderId}`,
   },
   ADMIN: {

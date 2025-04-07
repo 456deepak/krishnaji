@@ -25,6 +25,8 @@ import Contact from './pages/Contact';
 import Terms from './pages/Terms';
 import Refunds from './pages/Refunds';
 import Checkout from './pages/Checkout';
+import PaymentCallback from './pages/PaymentCallback';
+
 const AppContent = () => {
   return (
     <div className="min-h-screen bg-background">
@@ -46,6 +48,23 @@ const AppContent = () => {
               <Route path="/refunds" element={<Refunds />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+
+              {/* Payment Routes */}
+              <Route path="/payment/callback" element={
+                <ProtectedRoute>
+                  <PaymentCallback />
+                </ProtectedRoute>
+              } />
+              <Route path="/payment/success" element={
+                <ProtectedRoute>
+                  <PaymentCallback />
+                </ProtectedRoute>
+              } />
+              <Route path="/payment/failure" element={
+                <ProtectedRoute>
+                  <PaymentCallback />
+                </ProtectedRoute>
+              } />
 
               {/* Protected User Routes */}
               <Route
