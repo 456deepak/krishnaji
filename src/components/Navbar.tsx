@@ -75,7 +75,7 @@ const Navbar = () => {
             transition={{ delay: 0.2 }}
             className="flex items-center"
           >
-            <Link to="/" className="text-2xl font-bold text-foreground">
+            <Link to="/" className="text-2xl font-bold text-foreground xl:ml-0 sm:ml-9">
               <span className="text-primary">Kirpabihari</span>Pay
             </Link>
           </motion.div>
@@ -140,7 +140,20 @@ const Navbar = () => {
                   {isMobileMenuOpen ? (
                     <X className="h-6 w-6" />
                   ) : (
-                    <Menu className="h-6 w-6" />
+                    
+                    <Button variant="ghost" className="w-full justify-start ml-5" onClick={toggleTheme}>
+                      {theme === 'light' ? (
+                        <>
+                          <Moon className="mr-2 h-4 w-4" />
+                          Dark Mode
+                        </>
+                      ) : (
+                        <>
+                          <Sun className="mr-2 h-4 w-4" />
+                          Light Mode
+                        </>
+                      )}
+                    </Button>
                   )}
                 </Button>
               </SheetTrigger>

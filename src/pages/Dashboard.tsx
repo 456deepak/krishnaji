@@ -38,7 +38,7 @@ const Dashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
+            <div className="text-2xl font-bold">₹45,231.89</div>
             <p className="text-xs text-muted-foreground flex items-center">
               +20.1% 
               <ArrowUpRight className="ml-1 h-4 w-4 text-emerald-500" />
@@ -80,7 +80,7 @@ const Dashboard = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$59.80</div>
+            <div className="text-2xl font-bold">₹59.80</div>
             <p className="text-xs text-muted-foreground flex items-center">
               +6.1%
               <ArrowUpRight className="ml-1 h-4 w-4 text-emerald-500" />
