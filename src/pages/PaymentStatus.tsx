@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { BACKEND_URL } from '@/utils/config';
 
 const PaymentStatus = () => {
   const [searchParams] = useSearchParams();
@@ -19,7 +20,7 @@ const PaymentStatus = () => {
           throw new Error('Order ID not found');
         }
 
-        const response = await fetch(`/api/payments/verify/${orderId}`, {
+        const response = await fetch(`${BACKEND_URL}/api/payments/verify/${orderId}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -62,7 +63,7 @@ const PaymentStatus = () => {
   }, [searchParams, toast]);
 
   const handleContinue = () => {
-    navigate('/dashboard');
+    navigate('/dashboard/payments');
   };
 
   if (loading) {

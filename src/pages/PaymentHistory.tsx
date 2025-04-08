@@ -98,7 +98,7 @@ const PaymentHistory = () => {
       }
 
       const data = await response.json();
-      setPayments(data);
+      setPayments(data.data);
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast({
@@ -193,7 +193,7 @@ const PaymentHistory = () => {
       }
 
       const filteredData = await response.json();
-      setPayments(filteredData);
+      setPayments(filteredData.data);
       
       toast({
         title: "Success",

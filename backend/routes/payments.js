@@ -109,9 +109,22 @@ router.post('/verify', auth, async (req, res) => {
     const { orderId } = req.body;
     console.log('Verifying payment for order:', orderId);
 
-    // Fetch order from Cashfree
-    const orderResponse = await cashfree.PGFetchOrder(orderId);
-    console.log('Cashfree order verification response:', orderResponse);
+    // Fetch order from Cashfree using axios directly to ensure correct URL is used
+    const orderResponse = await axios.get(
+      process.env.CASHFREE_ENV === 'production' 
+        ? `https://api.cashfree.com/pg/orders/${orderId}` 
+        : `https://sandbox.cashfree.com/pg/orders/${orderId}`,
+      {
+        headers: {
+          'x-api-version': '2023-08-01',
+          'x-client-id': process.env.CASHFREE_APP_ID,
+          'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    console.log('Cashfree order verification response:', orderResponse.data);
     
     const payment = await Payment.findOne({ orderId });
     if (!payment) {
