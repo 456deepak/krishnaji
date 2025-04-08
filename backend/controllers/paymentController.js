@@ -1,6 +1,8 @@
 const axios = require('axios');
 
-const CASHFREE_API_URL = 'https://sandbox.cashfree.com/pg';
+const CASHFREE_API_URL = process.env.CASHFREE_ENV === 'production' 
+  ? 'https://api.cashfree.com/pg' 
+  : 'https://sandbox.cashfree.com/pg';
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 

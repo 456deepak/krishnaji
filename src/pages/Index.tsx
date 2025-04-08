@@ -63,7 +63,7 @@ const Home = () => {
                   <div className="h-40 bg-white/10 rounded-lg mb-6 flex items-center justify-center">
                     <div className="text-center">
                       <p className="text-white/70 text-sm">Transaction Amount</p>
-                      <p className="text-white text-3xl font-bold">$1,299.00</p>
+                      <p className="text-white text-3xl font-bold">₹ 1,299.00</p>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">

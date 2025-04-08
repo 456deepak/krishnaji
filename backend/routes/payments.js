@@ -9,7 +9,7 @@ const axios = require('axios');
 const Transaction = require('../models/Transaction');
 // Initialize Cashfree
 const cashfree = new Cashfree(
-  Cashfree.SANDBOX,
+  process.env.CASHFREE_ENV === 'production' ? Cashfree.PRODUCTION : Cashfree.SANDBOX,
   process.env.CASHFREE_APP_ID || "TEST10521959fe208239e07027d11fea95912501",
   process.env.CASHFREE_SECRET_KEY || "cfsk_ma_test_4197569adaa2437152606159bc2bbdaa_2331ff1d"
 );
@@ -22,15 +22,6 @@ const validatePayment = [
   body('recipientPhone').notEmpty().withMessage('Recipient phone is required')
 ];
 
-// Create payment
-router.post('/create', auth, validatePayment, async (req, res) => {
-  
-});
-
-// Create order and get payment session ID
-router.post('/create-order', auth, async (req, res) => {
- 
-});
 
 // Update user balance
 router.post('/update-balance', auth, async (req, res) => {

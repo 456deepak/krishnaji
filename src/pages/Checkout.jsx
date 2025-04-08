@@ -72,7 +72,7 @@ function Checkout() {
   const initializeSDK = async () => {
     try {
       const cashfreeInstance = await load({
-        mode: "sandbox",
+        mode: import.meta.env.VITE_CASHFREE_ENV === 'production' ? 'production' : 'sandbox',
       });
       setCashfree(cashfreeInstance);
     } catch (error) {

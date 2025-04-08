@@ -51,7 +51,7 @@ const MakePayment = () => {
   const handlePayment = async (data: FormValues) => {
     setLoading(true);
     const cashfree = await load({
-        mode: "sandbox" //or production
+        mode: import.meta.env.VITE_CASHFREE_ENV === 'production' ? 'production' : 'sandbox'
     });
     // Form submission is handled by CashfreeCheckout component
   };

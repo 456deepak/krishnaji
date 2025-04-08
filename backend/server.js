@@ -10,7 +10,7 @@ const User = require('./models/User');
 // Load environment variables
 dotenv.config();
 const cashfree = new Cashfree(
-  Cashfree.SANDBOX,
+  process.env.CASHFREE_ENV === 'production' ? Cashfree.PRODUCTION : Cashfree.SANDBOX,
   process.env.CASHFREE_APP_ID || "TEST10521959fe208239e07027d11fea95912501",
   process.env.CASHFREE_SECRET_KEY || "cfsk_ma_test_4197569adaa2437152606159bc2bbdaa_2331ff1d"
 );
@@ -93,21 +93,27 @@ app.use("/api/cashfree", async (req, res) => {
         customer_phone: customer_phone
       },
       order_meta: {
-        return_url: `${process.env.REACT_APP_URL}/payment/callback?status=success&order_id=${orderId}`,
-        notify_url: `${process.env.REACT_APP_URL}/api/payments/webhook`
+        return_url: `${process.env.FRONTEND_URL}/payment/callback?status=success&order_id=${orderId}`,
+        notify_url: `${process.env.BACKEND_URL}/api/payments/webhook`
       }
     };
     
     console.log('Creating Cashfree order:', orderData);
     
-    const response = await axios.post("https://sandbox.cashfree.com/pg/orders", orderData, {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': process.env.CASHFREE_APP_ID || 'TEST10521959fe208239e07027d11fea95912501',
-        'x-client-secret': process.env.CASHFREE_SECRET_KEY || 'cfsk_ma_test_4197569adaa2437152606159bc2bbdaa_2331ff1d',
-        'x-api-version': '2023-08-01',
+    const response = await axios.post(
+      process.env.CASHFREE_ENV === 'production' 
+        ? "https://api.cashfree.com/pg/orders" 
+        : "https://sandbox.cashfree.com/pg/orders", 
+      orderData, 
+      {
+        headers: {
+          'x-api-version': '2025-01-01',
+          'x-client-id': process.env.CASHFREE_APP_ID,
+          'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     console.log('Cashfree response:', response.data);
 
